@@ -42,7 +42,15 @@ def main(argv: list[str] | None = None) -> int:
         print("Без этого флага телевизор не трогается.")
         return 2
 
-    enabled, disabled = fetch_lists(args.host)
+    try:
+        enabled, disabled = fetch_lists(args.host)
+    except Exception as exc:
+        print("Телевизор не ответил, поэтому на его экране ничего не появилось.")
+        print("Сам телевизор не менялся.")
+        print("Проверьте короткую строку адреса, она начинается с 192.168.")
+        print("На телевизоре должна быть включена отладка по USB, компьютер и телевизор в одной сети.")
+        print(exc)
+        return 1
     installed = sorted(set(enabled) | set(disabled))
     print("\n".join(plan_lines(installed)))
     write_snapshot(enabled, disabled)

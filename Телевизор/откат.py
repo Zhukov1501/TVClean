@@ -29,7 +29,12 @@ def main(argv: list[str] | None = None) -> int:
         print("Тот же возврат без Python: TV_HOST=192.168.50.65 sh откат/ВЕРНУТЬ.sh")
         return 2
 
-    _enabled, current_disabled = fetch_lists(args.host)
+    try:
+        _enabled, current_disabled = fetch_lists(args.host)
+    except Exception as exc:
+        print("Телевизор не ответил, откат не начался. На экране телевизора ничего не меняется.")
+        print(exc)
+        return 1
     actions = restore_actions(snapshot["enabled"], snapshot["disabled"], current_disabled)
     if not actions:
         print("Телевизор уже совпадает со снимком.")
