@@ -142,6 +142,16 @@ class RollbackTest(unittest.TestCase):
                 found = tvopt.adb_program()
         self.assertEqual(Path(found), exe)
 
+    def test_missing_dll_is_reported_before_launch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "platform-tools"
+            folder.mkdir()
+            (folder / "adb.exe").write_bytes(b"")
+            with mock.patch.object(tvopt, "ROOT", root):
+                reason = tvopt.missing_adb_reason()
+        self.assertIn("AdbWinApi.dll", reason or "")
+
 
 if __name__ == "__main__":
     unittest.main()

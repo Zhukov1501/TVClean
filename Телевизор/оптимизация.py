@@ -45,6 +45,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         enabled, disabled = fetch_lists(args.host)
     except Exception as exc:
+        text = str(exc)
+        if "WinError 2" in text or "platform-tools" in text or "AdbWinApi" in text:
+            print("Программа связи с телевизором не запустилась. Сам телевизор не менялся и поэтому молчит.")
+            print("Нужна вся папка platform-tools. Внутри рядом должны лежать adb.exe и AdbWinApi.dll.")
+            print("Один файл adb.exe копировать нельзя.")
+            return 1
         print("Телевизор не ответил, поэтому на его экране ничего не появилось.")
         print("Сам телевизор не менялся.")
         print("Проверьте короткую строку адреса, она начинается с 192.168.")

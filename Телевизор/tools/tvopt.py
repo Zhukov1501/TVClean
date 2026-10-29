@@ -9,6 +9,7 @@ Netflix, Кинопоиск, Музыка и Happ остаются. Перед �
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -228,6 +229,9 @@ def load_snapshot() -> dict[str, list[str]] | None:
 
 def adb_program() -> str:
     """Найти adb рядом со скриптом, в том числе если архив распаковали папкой глубже."""
+    override = os.environ.get("TV_ADB", "").strip().strip('"')
+    if override:
+        return override
     direct = [
         ROOT / "platform-tools" / "adb.exe",
         ROOT / "platform-tools" / "adb",
@@ -239,11 +243,27 @@ def adb_program() -> str:
     for candidate in direct:
         if candidate.is_file():
             return str(candidate)
-    for pattern in ("*/adb.exe", "*/*/adb.exe"):
-        for candidate in sorted(ROOT.glob(pattern)):
-            if candidate.is_file():
-                return str(candidate)
+    for candidate in sorted(ROOT.rglob("adb.exe")):
+        if candidate.is_file():
+            return str(candidate)
     return "adb"
+
+
+def missing_adb_reason(program: str | None = None) -> str | None:
+    """Почему adb не запустится. None значит файл на месте и рядом есть нужная библиотека."""
+    path = Path(program if program is not None else adb_program())
+    if not path.is_file():
+        return (
+            "Не запускается программа связи adb. "
+            "Положите всю папку platform-tools внутрь папки Телевизор. "
+            "Внутри неё должны лежать adb.exe и AdbWinApi.dll. Один файл adb.exe не копируйте."
+        )
+    if path.suffix.lower() == ".exe" and not path.with_name("AdbWinApi.dll").is_file():
+        return (
+            f"Рядом с {path} нет файла AdbWinApi.dll. "
+            "Скопируйте всю папку platform-tools из архива, не вытаскивайте adb.exe отдельно."
+        )
+    return None
 
 
 def adb_serial(host: str) -> str:
@@ -254,6 +274,9 @@ def adb_serial(host: str) -> str:
 
 
 def adb_shell(host: str, command: str) -> str:
+    reason = missing_adb_reason()
+    if reason:
+        raise RuntimeError(reason)
     serial = adb_serial(host)
     adb = adb_program()
     subprocess.run([adb, "connect", serial], check=False, timeout=20, capture_output=True, text=True)

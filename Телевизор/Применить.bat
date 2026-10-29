@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-echo Версия 2
+echo Версия 3
 echo.
 echo Применить. Выключится только реклама и встроенный очиститель.
 echo Кинопоиск, Музыка, Happ, YouTube, Netflix, пульт и каналы остаются.
@@ -10,12 +10,23 @@ echo Одна клавиша окно не закрывает.
 
 set "ADB="
 for /r "%~dp0" %%F in (adb.exe) do if not defined ADB set "ADB=%%F"
-if defined ADB goto haveadb
+if defined ADB goto haveadbfile
 echo.
 echo Не найден файл adb.exe. Телевизор поэтому молчит.
 echo Распакуйте архив так, чтобы adb.exe лежал внутри папки Телевизор.
 echo Сейчас в папке лежит:
 dir /b
+call :hold
+exit /b 1
+
+:haveadbfile
+set "TV_ADB=%ADB%"
+for %%D in ("%ADB%") do set "ADBDIR=%%~dpD"
+if exist "%ADBDIR%AdbWinApi.dll" goto haveadb
+echo.
+echo Файл adb.exe есть, но рядом нет AdbWinApi.dll.
+echo Скопируйте всю папку platform-tools, не один файл adb.exe.
+echo Папка с adb: %ADBDIR%
 call :hold
 exit /b 1
 
