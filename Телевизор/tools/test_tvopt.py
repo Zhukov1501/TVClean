@@ -1,5 +1,9 @@
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
+import tvopt
 from tvopt import (
     classify,
     decide,
@@ -126,6 +130,17 @@ class RollbackTest(unittest.TestCase):
             parse_pm_list("package:ru.kinopoisk.tv\npackage:com.happproxy\nмусор\n"),
             ["com.happproxy", "ru.kinopoisk.tv"],
         )
+
+    def test_adb_program_finds_a_nested_copy(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            nested = root / "platform-tools" / "platform-tools"
+            nested.mkdir(parents=True)
+            exe = nested / "adb.exe"
+            exe.write_bytes(b"")
+            with mock.patch.object(tvopt, "ROOT", root):
+                found = tvopt.adb_program()
+        self.assertEqual(Path(found), exe)
 
 
 if __name__ == "__main__":

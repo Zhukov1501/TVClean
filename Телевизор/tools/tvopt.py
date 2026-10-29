@@ -227,14 +227,22 @@ def load_snapshot() -> dict[str, list[str]] | None:
 
 
 def adb_program() -> str:
-    for candidate in (
-        ROOT / "platform-tools" / "adb",
+    """Найти adb рядом со скриптом, в том числе если архив распаковали папкой глубже."""
+    direct = [
         ROOT / "platform-tools" / "adb.exe",
-        ROOT / "adb",
+        ROOT / "platform-tools" / "adb",
+        ROOT / "platform-tools" / "platform-tools" / "adb.exe",
+        ROOT / "platform-tools" / "platform-tools" / "adb",
         ROOT / "adb.exe",
-    ):
+        ROOT / "adb",
+    ]
+    for candidate in direct:
         if candidate.is_file():
             return str(candidate)
+    for pattern in ("*/adb.exe", "*/*/adb.exe"):
+        for candidate in sorted(ROOT.glob(pattern)):
+            if candidate.is_file():
+                return str(candidate)
     return "adb"
 
 
